@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify (node ${{ matrix.node }} on ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # BOTH ends of the supported range, on BOTH platforms that matter.
+        # 22.13 is the declared floor: testing only the newest LTS would let a
+        # syntax or API that does not exist on the floor ship silently. Windows
+        # is not optional either - this product's path rules are largely about
+        # UNC paths, junctions, drive-relative paths and alternate data streams,
+        # and a Linux-only matrix would test the pure functions but never the
+        # real filesystem behaviour underneath them.
+        os: [ubuntu-latest, windows-latest]
+        node: ['22.13', '24']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install (locked)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Tests with enforced coverage
+        run: npm run coverage
+
+      - name: stdout purity - zero bytes on stdout
+        shell: bash
+        run: |
+          bytes=$(node src/mcp/main.js --version 2>/dev/null | wc -c)
+          echo "stdout bytes: $bytes"
+          test "$bytes" -eq 0
+
+      - name: stdout purity - the banner IS on stderr
+        shell: bash
+        # `2>&1 >/dev/null` proves the banner is ON STDERR. The naive
+        # `>/dev/null 2>&1` would also pass for a server that printed nothing at
+        # all, which is a weaker guarantee than the one being made.
+        run: node src/mcp/main.js --version 2>&1 >/dev/null | grep -q "GenXEvo"
+
+      - name: Production dependency tree
+        run: npm ls --omit=dev
+
+      - name: Package contents
+        run: npm pack --dry-run

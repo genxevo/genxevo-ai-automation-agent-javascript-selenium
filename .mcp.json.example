@@ -1,0 +1,40 @@
+{
+  "_comment": [
+    "Copy to .mcp.json (or into your client's own MCP configuration) and edit the path.",
+    "",
+    "Three forms are shown. The first needs nothing installed at all.",
+    "",
+    "Claude Code and most clients use the 'mcpServers' key shown here.",
+    "Some clients use 'servers' instead - see docs/installation.md.",
+    "",
+    "Windows paths need doubled backslashes in JSON: C:\\\\Codes\\\\my-automation-project"
+  ],
+  "mcpServers": {
+    "genxevo-selenium": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@genxevo/genxevo-selenium-agent",
+        "--workspace",
+        "C:\\Codes\\my-automation-project"
+      ],
+      "env": {}
+    },
+    "_genxevo-selenium-from-a-clone": {
+      "_comment": "Use this when you have cloned the repository rather than installed the package.",
+      "command": "node",
+      "args": [
+        "C:\\Codes\\genxevo-ai-automation-agent-javascript-selenium\\src\\mcp\\main.js",
+        "--workspace",
+        "C:\\Codes\\my-automation-project"
+      ],
+      "env": {}
+    },
+    "_genxevo-selenium-globally-installed": {
+      "_comment": "Use this after `npm install -g @genxevo/genxevo-selenium-agent`.",
+      "command": "genxevo-selenium-agent",
+      "args": ["--workspace", "C:\\Codes\\my-automation-project"],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "_comment": "The smallest useful configuration: rely on every safe default, and only widen the scan.",
+  "version": 1,
+  "workspace": {
+    "maxScanDepth": 8
+  }
+}

@@ -1,0 +1,67 @@
+# Node
+node_modules/
+npm-debug.log*
+.npm/
+*.tsbuildinfo
+
+# Coverage and test output
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+allure-results/
+allure-report/
+junit-report/
+
+# Build output. There is no build step in this project; these entries exist so
+# that a contributor experimenting with one cannot stage its output.
+dist/
+build/
+out/
+*.tgz
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Credentials. These must never reach a public repository, even accidentally.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+
+# npm / package-manager credential files.
+# The rule is deliberately broad and then narrowed by an anchored exception:
+# GenXEvo's own root .npmrc is tracked (it holds engine-strict=true and nothing
+# else); a .npmrc anywhere else in the tree is ignored, because that is where
+# registry auth tokens live.
+.npmrc
+!/.npmrc
+.yarnrc
+.yarnrc.yml
+
+# The GenXEvo agent's own working directory: runs, evidence, cached discovery.
+# Everything the agent writes at runtime lives here and is never committed.
+.genxevo/
+
+# The operator's REAL configuration. Commit genxevo.config.example.json instead;
+# a real config may name internal hosts.
+genxevo.config.json
+genxevo.config.local.json
+
+# MCP client wiring is developer-specific.
+.mcp.json
+
+# Internal phase and audit reports. Working artefacts, kept in a private
+# archive alongside the repository rather than inside it.
+PHASE*-REPORT.md
+PHASE*-REVIEW.md
+_internal/

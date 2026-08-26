@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "Unattended use in CI. Execution is ON here, which is a deliberate operator choice:",
+    "it means GenXEvo may run the project s tests, and running tests runs project code.",
+    "A selection is still required, so a full-suite run cannot happen by accident."
+  ],
+  "version": 1,
+  "project": {
+    "runner": "mocha",
+    "packageManager": "npm"
+  },
+  "execution": {
+    "enabled": true,
+    "requireSelection": true,
+    "defaultTimeoutSeconds": 600,
+    "useProjectScripts": false
+  },
+  "browser": {
+    "headless": true
+  },
+  "security": {
+    "redactSecrets": true,
+    "frameUntrustedContent": true
+  },
+  "evidence": {
+    "screenshots": true,
+    "retentionRuns": 5
+  }
+}

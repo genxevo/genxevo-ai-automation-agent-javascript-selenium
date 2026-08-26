@@ -1,0 +1,14 @@
+{
+  "_comment": "Coverage is CHECKED, not merely reported. `--check-coverage` is in the npm script and these thresholds fail the build, because a coverage number nobody enforces is a number that only ever goes down. The floors below are the values this build actually meets, rounded DOWN to the nearest whole percent - they are a ratchet, not an aspiration, and raising one is a deliberate act.",
+  "all": true,
+  "src": ["src"],
+  "include": ["src/**/*.js"],
+  "exclude": ["test/**", "examples/**", "coverage/**"],
+  "reporter": ["text-summary", "lcov"],
+  "reports-dir": "coverage",
+  "check-coverage": true,
+  "lines": 96,
+  "statements": 96,
+  "functions": 98,
+  "branches": 87
+}

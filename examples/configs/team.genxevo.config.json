@@ -1,0 +1,27 @@
+{
+  "_comment": [
+    "A shared team configuration for a monorepo whose Selenium suite lives in one package.",
+    "Naming the runner and the package manager removes the ambiguity discovery would otherwise report."
+  ],
+  "version": 1,
+  "workspace": {
+    "ignoredDirectories": [
+      "node_modules",
+      ".git",
+      "dist",
+      "build",
+      "coverage",
+      ".turbo",
+      ".genxevo"
+    ]
+  },
+  "project": {
+    "projectRoot": "packages/regression",
+    "testRoots": ["packages/regression/suite"],
+    "runner": "mocha",
+    "packageManager": "pnpm"
+  },
+  "security": {
+    "additionalSecretKeyFragments": ["tenant_pin", "internal_key"]
+  }
+}
