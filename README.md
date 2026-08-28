@@ -11,43 +11,6 @@ enforced safety boundaries and verifiable results.
 
 ---
 
-## The problem
-
-Ask any language model to fix a failing Selenium test and it will produce a confident,
-plausible, wrong locator.
-
-It has to. It cannot see the page, it cannot see the test output, and it usually cannot
-even see the project's real shape — which runner actually collects the suite, which Node
-version it runs on, whether the project is Selenium at all or WebdriverIO wearing similar
-clothes, where the page objects really live. It fills the gap with fluency.
-
-GenXEvo exists to remove the gap, so the model has something true to reason about.
-
-## The principle
-
-> **Evidence before modification. Evidence before success.**
-
-The agent never invents a locator; it observes one. It never declares a fix; it proves one
-with a run correlated by identifier to the failure it claims to have repaired. Every
-capability returns evidence with an explicit trust level, every conclusion carries the
-signals that produced it, and every result says in a machine-readable field whether it
-succeeded — because an agent that cannot tell success from failure will confidently report
-a repair it never verified, and that outcome is worse than not helping at all.
-
-## What this is, and what it is not
-
-|            |                                                                                                |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| **Is**     | An MCP capability layer around the UI automation engineering workflow you already run          |
-| **Is not** | A test framework, a Selenium wrapper, a replacement for mocha/jest/vitest, or an AI of its own |
-
-**There is no model inside this server.** The AI model reasons. GenXEvo is deterministic:
-it reads what is actually on disk, and later drives a real browser and executes real tests,
-and returns structured facts. When it does not know something, it says so, with a
-confidence level attached.
-
----
-
 ## Status — honestly
 
 This is **phase 1B**: the foundation and exactly **two genuinely working capabilities**.
@@ -66,6 +29,64 @@ because it teaches the agent something false.
 
 If you call a planned capability by name anyway, you get `status: "failure"` carrying
 `error.category: "notImplemented"` and the phase it is scheduled for. Nothing pretends.
+
+---
+
+## The two working tools
+
+Both are read-only, idempotent, take **no arguments**, and are always safe to repeat. Both
+publish their full `outputSchema` in `tools/list`, so an agent learns how to read a result
+before it calls anything.
+
+### `genxevo_agent_status`
+
+|                |                                                                                                                                                                                                                             |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Purpose**    | Report what the agent _is_ — call it first in any session, and again whenever a capability behaves unexpectedly                                                                                                             |
+| **Inputs**     | None. `additionalProperties: false`, so an invented argument is refused by the protocol rather than silently ignored                                                                                                        |
+| **Returns**    | `configured`, configuration source (basename only), host Node runtime, workspace root **names**, security policy, execution/browser/repair policy, and all 17 capabilities with `state`, `safety`, `idempotent` and `phase` |
+| **Evidence**   | In-memory state only; no filesystem read, so no untrusted content                                                                                                                                                           |
+| **Confidence** | Not applicable — everything reported is the server's own state                                                                                                                                                              |
+| **Refusals**   | None. When unconfigured it returns **`success`**, because "you are not configured" is a complete and accurate answer to the question asked                                                                                  |
+
+The `host` section reports the Node runtime executing **GenXEvo itself**, which is usually
+_not_ the runtime your tests run on. The field says so in its own `note`, because that
+confusion produces module-resolution errors that get diagnosed as test failures.
+
+### `genxevo_discover_project`
+
+|                |                                                                                                                                                 |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Purpose**    | Report the JavaScript automation project that is actually in the workspace                                                                      |
+| **Inputs**     | None                                                                                                                                            |
+| **Returns**    | `summary`, `manifests`, `lockfiles`, `runnerConfigs`, `directories`, `ciFiles`, `toolchain`, `scan`                                             |
+| **Evidence**   | Structure and toolchain observations marked `trusted`, plus at least one **`untrusted`**, redacted, framed excerpt of a real project file       |
+| **Confidence** | `high` / `medium` / `low` / `none` on the runner, test roots, package manager and framework conclusions, each with the signals that produced it |
+| **Refusals**   | `configurationError` when no workspace is approved; `blocked` for any path outside it                                                           |
+
+What it establishes, and how:
+
+- **Test runner** — from the project's own configuration and dependencies. `unknown` is a
+  real answer and is returned rather than a guess.
+- **Browser library** — Selenium, WebdriverIO, Playwright, Puppeteer or Appium, listed
+  **separately**. Conflating Selenium with WebdriverIO is exactly how a Selenium agent
+  quietly becomes one that works on nothing.
+- **Test roots** — from the runner's own configuration, or from files matching a test-file
+  shape; never from a folder merely being called `test`.
+- **Package manager** — from lockfiles, not from what the manifest claims.
+- **Toolchain** — declared Node range, the pinned version **and where the pin came from**,
+  script _names_ (never script bodies), and what is actually **installed**, read from
+  `node_modules/.package-lock.json` — which is frequently not what the project declares.
+
+A truncated scan is **`partialSuccess`**, never `success`, because an agent must know that
+"not found" might mean "not looked at".
+
+**It never imports, evaluates, installs or runs anything.** `wdio.conf.js`, `jest.config.js`
+and their kind are executable JavaScript and are recorded as present, read as **text only**,
+and never executed. `node_modules` is never walked.
+
+Full contract, plus all 15 planned capabilities with their guarantees:
+[`docs/mcp-tools.md`](docs/mcp-tools.md).
 
 ---
 
@@ -190,6 +211,43 @@ Worked examples: [`examples/configs/`](examples/configs/).
 
 ---
 
+## What this is, and what it is not
+
+|            |                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| **Is**     | An MCP capability layer around the UI automation engineering workflow you already run          |
+| **Is not** | A test framework, a Selenium wrapper, a replacement for mocha/jest/vitest, or an AI of its own |
+
+**There is no model inside this server.** The AI model reasons. GenXEvo is deterministic:
+it reads what is actually on disk, and later drives a real browser and executes real tests,
+and returns structured facts. When it does not know something, it says so, with a
+confidence level attached.
+
+---
+
+## The problem
+
+Ask any language model to fix a failing Selenium test and it will produce a confident,
+plausible, wrong locator.
+
+It has to. It cannot see the page, it cannot see the test output, and it usually cannot
+even see the project's real shape — which runner actually collects the suite, which Node
+version it runs on, whether the project is Selenium at all or WebdriverIO wearing similar
+clothes, where the page objects really live. It fills the gap with fluency.
+
+GenXEvo exists to remove the gap, so the model has something true to reason about.
+
+## The principle
+
+> **Evidence before modification. Evidence before success.**
+
+The agent never invents a locator; it observes one. It never declares a fix; it proves one
+with a run correlated by identifier to the failure it claims to have repaired. Every
+capability returns evidence with an explicit trust level, every conclusion carries the
+signals that produced it, and every result says in a machine-readable field whether it
+succeeded — because an agent that cannot tell success from failure will confidently report
+a repair it never verified, and that outcome is worse than not helping at all.
+
 ## First-use workflow
 
 ```
@@ -267,64 +325,6 @@ evidence rather than narrate around it. More, with full worked examples, in
 > driving a browser, inspecting live elements or verifying a repair describe phases 1C–1E.
 > This build will return `error.category: "notImplemented"` for those, naming the phase.
 > See [`docs/roadmap.md`](docs/roadmap.md).
-
----
-
-## The two working tools
-
-Both are read-only, idempotent, take **no arguments**, and are always safe to repeat. Both
-publish their full `outputSchema` in `tools/list`, so an agent learns how to read a result
-before it calls anything.
-
-### `genxevo_agent_status`
-
-|                |                                                                                                                                                                                                                             |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Purpose**    | Report what the agent _is_ — call it first in any session, and again whenever a capability behaves unexpectedly                                                                                                             |
-| **Inputs**     | None. `additionalProperties: false`, so an invented argument is refused by the protocol rather than silently ignored                                                                                                        |
-| **Returns**    | `configured`, configuration source (basename only), host Node runtime, workspace root **names**, security policy, execution/browser/repair policy, and all 17 capabilities with `state`, `safety`, `idempotent` and `phase` |
-| **Evidence**   | In-memory state only; no filesystem read, so no untrusted content                                                                                                                                                           |
-| **Confidence** | Not applicable — everything reported is the server's own state                                                                                                                                                              |
-| **Refusals**   | None. When unconfigured it returns **`success`**, because "you are not configured" is a complete and accurate answer to the question asked                                                                                  |
-
-The `host` section reports the Node runtime executing **GenXEvo itself**, which is usually
-_not_ the runtime your tests run on. The field says so in its own `note`, because that
-confusion produces module-resolution errors that get diagnosed as test failures.
-
-### `genxevo_discover_project`
-
-|                |                                                                                                                                                 |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Purpose**    | Report the JavaScript automation project that is actually in the workspace                                                                      |
-| **Inputs**     | None                                                                                                                                            |
-| **Returns**    | `summary`, `manifests`, `lockfiles`, `runnerConfigs`, `directories`, `ciFiles`, `toolchain`, `scan`                                             |
-| **Evidence**   | Structure and toolchain observations marked `trusted`, plus at least one **`untrusted`**, redacted, framed excerpt of a real project file       |
-| **Confidence** | `high` / `medium` / `low` / `none` on the runner, test roots, package manager and framework conclusions, each with the signals that produced it |
-| **Refusals**   | `configurationError` when no workspace is approved; `blocked` for any path outside it                                                           |
-
-What it establishes, and how:
-
-- **Test runner** — from the project's own configuration and dependencies. `unknown` is a
-  real answer and is returned rather than a guess.
-- **Browser library** — Selenium, WebdriverIO, Playwright, Puppeteer or Appium, listed
-  **separately**. Conflating Selenium with WebdriverIO is exactly how a Selenium agent
-  quietly becomes one that works on nothing.
-- **Test roots** — from the runner's own configuration, or from files matching a test-file
-  shape; never from a folder merely being called `test`.
-- **Package manager** — from lockfiles, not from what the manifest claims.
-- **Toolchain** — declared Node range, the pinned version **and where the pin came from**,
-  script _names_ (never script bodies), and what is actually **installed**, read from
-  `node_modules/.package-lock.json` — which is frequently not what the project declares.
-
-A truncated scan is **`partialSuccess`**, never `success`, because an agent must know that
-"not found" might mean "not looked at".
-
-**It never imports, evaluates, installs or runs anything.** `wdio.conf.js`, `jest.config.js`
-and their kind are executable JavaScript and are recorded as present, read as **text only**,
-and never executed. `node_modules` is never walked.
-
-Full contract, plus all 15 planned capabilities with their guarantees:
-[`docs/mcp-tools.md`](docs/mcp-tools.md).
 
 ---
 
